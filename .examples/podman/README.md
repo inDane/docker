@@ -1,12 +1,14 @@
 # Run LibreBooking with Podman
 
-## Using the command line (test)
+## Using the command line
 
-This setup is meant for accessing the application for test purposes.
-It features:
+This example features:
 
 * A librebooking container reachable at <http://localhost:8080>
-* A persistent storage for the database and librebooking configuration files
+* A cron container executing scheduled librebooking-related jobs
+* A database container hosting the librebooking data
+* Persistent volumes storage for the database, librebooking configuration,
+uploaded images and reservations
 
 Adapt files `db.env`and `lb.env` to your needs
 
@@ -20,7 +22,7 @@ Add the containers to the pod
 
 ```sh
 podman container create \
-  --name db \
+  --name librebooking-db \
   --replace \
   --pod librebooking \
   --volume librebooking-db_conf:/config:U \
@@ -28,12 +30,24 @@ podman container create \
   docker.io/linuxserver/mariadb:10.6.13
 
 podman container create \
-  --name app \
+  --name librebooking-app \
   --replace \
   --pod librebooking \
   --volume librebooking-app_conf:/config:U \
+  --volume librebooking-app_img:/var/www/html/Web/uploads/images:U \
+  --volume librebooking-app_res:/var/www/html/Web/uploads/reservation:U \
   --env-file lb.env \
   docker.io/librebooking/librebooking:develop
+
+podman container create \
+  --name librebooking-cron \
+  --replace \
+  --pod librebooking \
+  --volumes-from librebooking-app \
+  --volume ./crontab:/config/lb-jobs-cron:U \
+  --env-file lb.env \
+  docker.io/librebooking/librebooking:develop \
+  supercronic /config/lb-jobs-cron
 ```
 
 Start the application
@@ -48,15 +62,15 @@ Stop the application
 podman pod stop librebooking
 ```
 
-## Using a Kubernetes yaml file (test)
+## Using a pod file
 
-This setup is meant for accessing the application for test purposes.
-It features:
+This setup is equivalent to the previous one, except it uses the
+`podman kube play` command.
 
-* A librebooking container reachable at <http://localhost:8080>
-* A persistent storage for the database and librebooking configuration files
-
-Adapt file `librebooking.yml` to your needs
+From the previous example, generate the pod file
+```sh
+podman kube generate librebooking --filename librebooking.yml
+``` 
 
 Start the application
 
