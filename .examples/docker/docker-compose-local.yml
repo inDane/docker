@@ -2,14 +2,14 @@ name: librebooking
 
 services:
   db:
-    image: ${LB_DB_DOCKER_IMAGE:-linuxserver/mariadb}:${LB_DB_DOCKER_TAG:-10.6.13}
+    image: ${CONTAINER_DB_DOCKER_IMAGE:-linuxserver/mariadb}:${CONTAINER_DB_DOCKER_TAG:-10.6.13}
     restart: always
     volumes:
       - db_conf:/config
     env_file:
       - db.env
   app:
-    image: ${LB_APP_DOCKER_IMAGE:-librebooking/librebooking}:${LB_APP_DOCKER_TAG:-develop}
+    image: ${CONTAINER_APP_DOCKER_IMAGE:-librebooking/librebooking}:${CONTAINER_APP_DOCKER_TAG:-develop}
     restart: always
     depends_on:
       - db
@@ -22,7 +22,7 @@ services:
     env_file:
       - lb.env
   cron:
-    image: ${LB_APP_DOCKER_IMAGE:-librebooking/librebooking}:${LB_APP_DOCKER_TAG:-develop}
+    image: ${CONTAINER_APP_DOCKER_IMAGE:-librebooking/librebooking}:${CONTAINER_APP_DOCKER_TAG:-develop}
     restart: always
     command: supercronic /config/lb-jobs-cron
     depends_on:
